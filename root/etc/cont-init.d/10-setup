@@ -1,0 +1,8 @@
+#!/usr/bin/with-contenv bash
+
+mkdir -p /data/auth ${REG_ASSET_PATH} ${REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY};
+
+chown -R $PUID:$PGID \
+    /data \
+    ${REG_ASSET_PATH} \
+    ${REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY};

@@ -1,0 +1,36 @@
+ARG DOCKERSRC=frommakefile
+#
+FROM ${DOCKERSRC}
+#
+ARG PUID=1001
+ARG PGID=1001
+#
+# defaults
+ENV CONF_YML=/data/config.yml \
+    REG_USER=registry \
+    REG_PASS=insecurebydefault \
+    REG_ASSET_PATH=/data/web \
+    REGISTRY_AUTH_HTPASSWD_PATH=/data/auth/.htpasswd \
+    REGISTRY_AUTH_HTPASSWD_REALM=Basic-Realm \
+    REGISTRY_HTTP_HOST=https://localhost:5000 \
+    REGISTRY_HTTP_TLS_CERTIFICATE=/data/auth/certificate.crt \
+    REGISTRY_HTTP_TLS_KEY=/data/auth/privatekey.pem \
+    REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY=/data/storage
+#
+RUN set -xe \
+    && addgroup -g ${PGID} -S registry \
+    && adduser -u ${PUID} -G registry -s /bin/bash -H -D registry \
+    && apk add --no-cache --purge -uU apache2-utils ca-certificates curl docker-registry openssl \
+    && VERSION=$(curl -SL https://api.github.com/repos/genuinetools/reg/releases/latest | awk '/tag_name/{print $4;exit}' FS='[""]') \
+    && echo "using reg version: $VERSION" \
+    && curl -Lo /usr/local/bin/reg https://github.com/genuinetools/reg/releases/download/${VERSION}/reg-linux-arm \
+    && chmod a+rx /usr/local/bin/reg \
+    && rm -rf /var/cache/apk/* /tmp/*
+#
+COPY root/ /
+#
+VOLUME /data/
+#
+EXPOSE 5000 5001
+#
+ENTRYPOINT ["/init"]

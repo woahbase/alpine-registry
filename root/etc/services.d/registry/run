@@ -1,0 +1,6 @@
+#!/usr/bin/with-contenv bash
+
+CONF_YML=${CONF_YML:-/etc/docker-registry/config.yml};
+
+s6-setuidgid registry exec docker-registry serve ${CONF_YML};
+

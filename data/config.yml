@@ -1,0 +1,69 @@
+version: 0.1
+
+# commented configurations are passed as variables
+
+# auth:
+#   htpasswd:
+#     realm: basic-realm
+#     path: /data/auth/.htpasswd
+
+health:
+  storagedriver:
+    enabled: true
+    interval: 30s
+    threshold: 3
+
+http:
+  addr: :5000
+  net: tcp
+  # prefix: /registry/
+  # host: https://your.server.fqdn:5000
+  # debug: your.server.fqdn:5000
+  secret: insecurebydefault
+  relativeurls: false
+  # tls:
+  #   certificate: /data/auth/certificate.crt
+  #   key: /data/auth/privatekey.pem
+  headers:
+    X-Content-Type-Options: [nosniff]
+    X-Forwarded-Proto: [https]
+    Access-Control-Allow-Origin: ['*']
+    Access-Control-Allow-Methods: ['HEAD', 'GET', 'OPTIONS', 'DELETE']
+    Access-Control-Allow-Headers: ['Authorization']
+    Access-Control-Max-Age: [1728000]
+    Access-Control-Allow-Credentials: [true]
+    Access-Control-Expose-Headers: ['Docker-Content-Digest']
+  http2:
+    disabled: false
+
+log:
+  accesslog:
+    disabled: true
+  level: info
+  formatter: json
+  fields:
+    service: registry
+    # environment: test
+
+# Uncomment to use this Registry as pull-through cache for DockerHub.
+# proxy:
+#   remoteurl: https://registry-1.docker.io
+
+storage:
+  cache:
+    blobdescriptor: inmemory
+  delete:
+    enabled : true
+  filesystem:
+    rootdirectory: /data/storage
+    maxthreads: 256
+  maintenance:
+    uploadpurging:
+      enabled : true
+      age: 168h
+      interval: 24h
+      dryrun: false
+    readonly:
+      enabled: false
+  redirect:
+    disable: false

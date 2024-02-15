@@ -1,0 +1,59 @@
+#!/usr/bin/with-contenv bash
+set -e
+
+REGISTRY_HTTP_TLS_CERTIFICATE="${REGISTRY_HTTP_TLS_CERTIFICATE:-/data/auth/certificate.crt}";
+REGISTRY_HTTP_TLS_KEY="${REGISTRY_HTTP_TLS_KEY:-/data/auth/privatekey.pem}";
+
+mkdir -p \
+    $(dirname $REGISTRY_HTTP_TLS_CERTIFICATE) \
+    ;
+
+# make sure we have certs
+if [ -f ${REGISTRY_HTTP_TLS_KEY} ] && [ -f ${REGISTRY_HTTP_TLS_CERTIFICATE} ]; then
+    echo "Using cert found in ${REGISTRY_HTTP_TLS_CERTIFICATE}";
+    echo "Using key  found in ${REGISTRY_HTTP_TLS_KEY}";
+    echo "Make sure docker-registry configurations have the same path as these.";
+else
+    SUBJECT="/C=US/ST=NY/L=EXAMPLE/O=EXAMPLE/OU=REGISTRY/CN=localhost/emailAddress=everybodycanseethis@mailinator.com"
+    SSLSUBJECT=${SSLSUBJECT:-$SUBJECT};
+    echo "Generating self-signed cert/key in";
+    echo "${REGISTRY_HTTP_TLS_CERTIFICATE} / ${REGISTRY_HTTP_TLS_KEY}";
+    echo "You may want to replace these with your own.";
+    openssl req -newkey rsa:4096 -x509 -days 3650 -nodes -out ${REGISTRY_HTTP_TLS_CERTIFICATE} -keyout ${REGISTRY_HTTP_TLS_KEY} -subj "${SSLSUBJECT}";
+fi
+
+# trust said certificate
+cp ${REGISTRY_HTTP_TLS_CERTIFICATE} /etc/ssl/certs/ \
+    && update-ca-certificates
+
+chown ${S6_USER:-alpine}:${S6_USER:-alpine} \
+    $(dirname $REGISTRY_HTTP_TLS_CERTIFICATE) \
+    $REGISTRY_HTTP_TLS_CERTIFICATE \
+    $REGISTRY_HTTP_TLS_KEY \
+    ;
+
+# make sure we have basic auth at the least
+if [ -n "${REGISTRY_AUTH_HTPASSWD_PATH}" ];
+then
+    mkdir -p \
+        $(dirname $REGISTRY_AUTH_HTPASSWD_PATH) \
+        ;
+    if [ -f "${REGISTRY_AUTH_HTPASSWD_PATH}" ];
+    then
+        echo "using credentials found in ${REGISTRY_AUTH_HTPASSWD_PATH}";
+    elif [ -n "${REG_USER}" ] && [ -n "${REG_PASS}" ];
+    then
+        echo "generating htpasswd authentication in ${REGISTRY_AUTH_HTPASSWD_PATH}";
+        echo "adding credentials for: ${REG_USER}";
+        htpasswd -bcB ${REGISTRY_AUTH_HTPASSWD_PATH} ${REG_USER} ${REG_PASS}
+    fi;
+    if [ -f "${REGISTRY_AUTH_HTPASSWD_PATH}" ];
+    then
+        chown ${S6_USER:-alpine}:${S6_USER:-alpine} \
+            $(dirname $REGISTRY_AUTH_HTPASSWD_PATH) \
+            $REGISTRY_AUTH_HTPASSWD_PATH \
+            ;
+        chmod 400 $REGISTRY_AUTH_HTPASSWD_PATH;
+    fi;
+fi;
+

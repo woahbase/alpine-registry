@@ -1,0 +1,9 @@
+#!/usr/bin/with-contenv bash
+set -e
+
+CONF_YML=${CONF_YML:-/etc/docker-registry/config.yml};
+
+s6-setuidgid ${S6_USER:-alpine} exec \
+    docker-registry \
+    serve \
+    ${CONF_YML};

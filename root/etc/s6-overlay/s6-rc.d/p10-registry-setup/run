@@ -1,0 +1,22 @@
+#!/usr/bin/with-contenv bash
+set -e
+
+CONF_YML="${CONF_YML:-/etc/docker-registry/config.yml}";
+REGISTRY_HTTP_TLS_CERTIFICATE="${REGISTRY_HTTP_TLS_CERTIFICATE:-/data/auth/certificate.crt}";
+REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY="${REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY:-/var/lib/docker-registry}"; # set in Dockerfile
+
+mkdir -p \
+    $(dirname $CONF_YML) \
+    ${REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY} \
+    ;
+
+if [ ! -f "${CONF_YML}" ];
+then
+    cp /defaults/config.yml ${CONF_YML};
+fi;
+
+chown ${S6_USER:-alpine}:${S6_USER:-alpine} \
+    $(dirname $CONF_YML) \
+    $CONF_YML \
+    ${REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY} \
+    ; # if not existing, docker mounts this dir as root:root

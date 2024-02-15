@@ -1,11 +1,17 @@
 version: 0.1
 
-# commented configurations are passed as variables
+# commented configurations may be passed as environment
+# variables. Check the Dockerfile for default values.
 
 # auth:
 #   htpasswd:
 #     realm: basic-realm
 #     path: /data/auth/.htpasswd
+
+compatibility:
+  schema1:
+    # signingkeyfile: /etc/docker-registry/key.json
+    enabled: true
 
 health:
   storagedriver:
@@ -18,8 +24,9 @@ http:
   net: tcp
   # prefix: /registry/
   # host: https://your.server.fqdn:5000
-  # debug: your.server.fqdn:5000
-  secret: insecurebydefault
+  debug:
+    addr: localhost:4999
+  # secret: such-secure-much-wow
   relativeurls: false
   # tls:
   #   certificate: /data/auth/certificate.crt
@@ -48,15 +55,29 @@ log:
 # Uncomment to use this Registry as pull-through cache for DockerHub.
 # proxy:
 #   remoteurl: https://registry-1.docker.io
+#   username:
+#   password:
+
+# redis:
+#   addr: your.redis.server:6379
+#   password: your.redis.pass
+#   db: 0
+#   dialtimeout: 10ms
+#   readtimeout: 10ms
+#   writetimeout: 10ms
+#   pool:
+#     maxidle: 16
+#     maxactive: 64
+#     idletimeout: 300s
 
 storage:
   cache:
-    blobdescriptor: inmemory
+    blobdescriptor: inmemory  # or 'redis'
   delete:
     enabled : true
   filesystem:
-    rootdirectory: /data/storage
-    maxthreads: 256
+    # rootdirectory: /data/storage  # or '/var/lib/docker-registry'
+    maxthreads: 200
   maintenance:
     uploadpurging:
       enabled : true

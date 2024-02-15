@@ -1,0 +1,12 @@
+#!/usr/bin/with-contenv bash
+set -e
+
+REG_ASSET_PATH="${REG_ASSET_PATH:-/data/web}";
+
+mkdir -p \
+    ${REG_ASSET_PATH} \
+    ;
+
+chown -R ${S6_USER:-alpine} \
+    ${REG_ASSET_PATH} \
+    ;

@@ -1,0 +1,23 @@
+#!/usr/bin/with-contenv bash
+set -e
+
+REG_ASSET_PATH="${REG_ASSET_PATH:-/data/web}";
+
+REGISTRY_HTTP_HOST="${REGISTRY_HTTP_HOST:-https://localhost:5000}";
+REGISTRY_HTTP_TLS_CERTIFICATE="${REGISTRY_HTTP_TLS_CERTIFICATE:-/data/auth/certificate.crt}";
+REGISTRY_HTTP_TLS_KEY="${REGISTRY_HTTP_TLS_KEY:-/data/auth/privatekey.pem}";
+
+REG_ARGS="${REG_ARGS:- --interval 1h0m0s --listen-address 0.0.0.0}";
+if [ -n "${REG_USER}" ] && [ -n "${REG_PASS}" ]; then
+    REG_ARGS="${REG_ARGS} -u ${REG_USER} -p ${REG_PASS}";
+fi;
+
+s6-setuidgid ${S6_USER:-alpine} exec \
+    reg server \
+    --port 5001 \
+    --asset-path ${REG_ASSET_PATH} \
+    --registry ${REGISTRY_HTTP_HOST} \
+    --cert ${REGISTRY_HTTP_TLS_CERTIFICATE} \
+    --key ${REGISTRY_HTTP_TLS_KEY} \
+    ${REG_ARGS}
+

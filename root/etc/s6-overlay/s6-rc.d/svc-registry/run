@@ -3,7 +3,9 @@ set -e
 
 CONF_YML=${CONF_YML:-/etc/docker-registry/config.yml};
 
-s6-setuidgid ${S6_USER:-alpine} exec \
+s6-setuidgid ${S6_USER:-alpine} \
+exec \
     docker-registry \
     serve \
-    ${CONF_YML};
+    ${CONF_YML} \
+    ;

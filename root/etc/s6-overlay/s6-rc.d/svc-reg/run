@@ -12,12 +12,14 @@ if [ -n "${REG_USER}" ] && [ -n "${REG_PASS}" ]; then
     REG_ARGS="${REG_ARGS} -u ${REG_USER} -p ${REG_PASS}";
 fi;
 
-s6-setuidgid ${S6_USER:-alpine} exec \
+s6-setuidgid ${S6_USER:-alpine} \
+exec \
     reg server \
     --port 5001 \
     --asset-path ${REG_ASSET_PATH} \
     --registry ${REGISTRY_HTTP_HOST} \
     --cert ${REGISTRY_HTTP_TLS_CERTIFICATE} \
     --key ${REGISTRY_HTTP_TLS_KEY} \
-    ${REG_ARGS}
+    ${REG_ARGS} \
+    ;
 

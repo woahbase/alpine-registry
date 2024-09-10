@@ -1,10 +1,13 @@
 #!/usr/bin/with-contenv bash
 set -e
 
+vecho () { if [ "${S6_VERBOSITY:-1}" -gt 0 ]; then echo "[$0] $@"; fi; }
+
 CONF_YML="${CONF_YML:-/etc/docker-registry/config.yml}";
 REGISTRY_HTTP_TLS_CERTIFICATE="${REGISTRY_HTTP_TLS_CERTIFICATE:-/data/auth/certificate.crt}";
 REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY="${REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY:-/var/lib/docker-registry}"; # set in Dockerfile
 
+vecho "Ensure configuration directories exist.";
 mkdir -p \
     $(dirname $CONF_YML) \
     ${REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY} \
@@ -12,11 +15,24 @@ mkdir -p \
 
 if [ ! -f "${CONF_YML}" ];
 then
+    vecho "Setting up default configurations at ${CONF_YML}.";
     cp /defaults/config.yml ${CONF_YML};
 fi;
 
+vecho "Fixing permissions.";
 chown ${S6_USER:-alpine}:${S6_USER:-alpine} \
     $(dirname $CONF_YML) \
     $CONF_YML \
     ${REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY} \
     ; # if not existing, docker mounts this dir as root:root
+
+# fix repo permissions
+if [ -n "${REGISTRY_PERMFIX_REPOS}" ]; # may become cumbersome if REPODIR has large number of repositories
+then
+    vecho "Fixing permissions on $REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY repositories.";
+    find "${REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY}" \
+        \! -user ${S6_USER:-alpine} -exec \
+        chown --no-dereference \
+        ${S6_USER:-alpine}:${S6_USER:-alpine} \
+        '{}' +;
+fi;

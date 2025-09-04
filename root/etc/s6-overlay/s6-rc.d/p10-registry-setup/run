@@ -19,20 +19,25 @@ then
     cp /defaults/config.yml ${CONF_YML};
 fi;
 
-vecho "Fixing permissions.";
-chown ${S6_USER:-alpine}:${S6_USER:-alpine} \
-    $(dirname $CONF_YML) \
-    $CONF_YML \
-    ${REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY} \
-    ; # if not existing, docker mounts this dir as root:root
+if [ -z "${REGISTRY_SKIP_PERMFIX}" ] \
+&& [ "X${EUID}" == "X0" ]; # requires root
+then
+    vecho "Fixing permissions.";
+    chown ${S6_USER:-alpine}:${PGID:-1000} \
+        $(dirname $CONF_YML) \
+        $CONF_YML \
+        ${REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY} \
+        ; # if not existing, docker mounts this dir as root:root
+fi;
 
 # fix repo permissions
-if [ -n "${REGISTRY_PERMFIX_REPOS}" ]; # may become cumbersome if REPODIR has large number of repositories
+if [ -n "${REGISTRY_PERMFIX_REPOS}" ] \
+&& [ "X${EUID}" == "X0" ]; # requires root # may become cumbersome if REPODIR has large number of repositories
 then
     vecho "Fixing permissions on $REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY repositories.";
     find "${REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY}" \
         \! -user ${S6_USER:-alpine} -exec \
         chown --no-dereference \
-        ${S6_USER:-alpine}:${S6_USER:-alpine} \
+        ${S6_USER:-alpine}:${PGID:-1000} \
         '{}' +;
 fi;

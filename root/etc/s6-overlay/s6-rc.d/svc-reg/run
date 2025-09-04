@@ -1,6 +1,8 @@
 #!/usr/bin/with-contenv bash
 set -e
 
+usercmd () { if [ "X${EUID}" != "X0" ]; then ${1} "${@:2}"; else s6-setuidgid ${PUID:-1000}:${PGID:-1000} ${1} "${@:2}"; fi; }
+
 REG_ASSET_PATH="${REG_ASSET_PATH:-/data/web}";
 
 REGISTRY_HTTP_HOST="${REGISTRY_HTTP_HOST:-https://localhost:5000}";
@@ -8,11 +10,11 @@ REGISTRY_HTTP_TLS_CERTIFICATE="${REGISTRY_HTTP_TLS_CERTIFICATE:-/data/auth/certi
 REGISTRY_HTTP_TLS_KEY="${REGISTRY_HTTP_TLS_KEY:-/data/auth/privatekey.pem}";
 
 REG_ARGS="${REG_ARGS:- --interval 1h0m0s --listen-address 0.0.0.0}";
-if [ -n "${REG_USER}" ] && [ -n "${REG_PASS}" ]; then
-    REG_ARGS="${REG_ARGS} -u ${REG_USER} -p ${REG_PASS}";
+if [ -n "${REG_USER}" ] && [ -n "${REG_PASS}" ];
+then REG_ARGS="${REG_ARGS} -u ${REG_USER} -p ${REG_PASS}";
 fi;
 
-s6-setuidgid ${S6_USER:-alpine} \
+usercmd \
 exec \
     reg server \
     --port 5001 \

@@ -10,7 +10,11 @@ mkdir -p \
     ${REG_ASSET_PATH} \
     ;
 
-vecho "Fixing permissions.";
-chown -R ${S6_USER:-alpine}:${S6_USER:-alpine} \
-    ${REG_ASSET_PATH} \
-    ;
+if [ -z "${REGISTRY_SKIP_PERMFIX}" ] \
+&& [ "X${EUID}" == "X0" ]; # requires root
+then
+    vecho "Fixing permissions.";
+    chown -R ${S6_USER:-alpine}:${PGID:-1000} \
+        ${REG_ASSET_PATH} \
+        ;
+fi;

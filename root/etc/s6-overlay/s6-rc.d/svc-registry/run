@@ -1,9 +1,11 @@
 #!/usr/bin/with-contenv bash
 set -e
 
+usercmd () { if [ "X${EUID}" != "X0" ]; then ${1} "${@:2}"; else s6-setuidgid ${PUID:-1000}:${PGID:-1000} ${1} "${@:2}"; fi; }
+
 CONF_YML=${CONF_YML:-/etc/docker-registry/config.yml};
 
-s6-setuidgid ${S6_USER:-alpine} \
+usercmd \
 exec \
     docker-registry \
     serve \

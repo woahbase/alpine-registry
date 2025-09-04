@@ -26,16 +26,26 @@ else
     openssl req -newkey rsa:4096 -x509 -days 3650 -nodes -out ${REGISTRY_HTTP_TLS_CERTIFICATE} -keyout ${REGISTRY_HTTP_TLS_KEY} -subj "${SSLSUBJECT}";
 fi
 
-# trust said certificate
-cp ${REGISTRY_HTTP_TLS_CERTIFICATE} /etc/ssl/certs/ \
-    && update-ca-certificates
 
-vecho "Fixing permissions.";
-chown ${S6_USER:-alpine}:${S6_USER:-alpine} \
-    $(dirname $REGISTRY_HTTP_TLS_CERTIFICATE) \
-    $REGISTRY_HTTP_TLS_CERTIFICATE \
-    $REGISTRY_HTTP_TLS_KEY \
-    ;
+# trust said certificate
+if [ -z "${REGISTRY_SKIP_TRUSTCERT}" ] \
+&& [ "X${EUID}" == "X0" ]; # requires root
+then
+    vecho "Adding certificate to root-certificate store.";
+    cp ${REGISTRY_HTTP_TLS_CERTIFICATE} /etc/ssl/certs/ \
+    && update-ca-certificates; # requires root
+fi;
+
+if [ -z "${REGISTRY_SKIP_PERMFIX}" ] \
+&& [ "X${EUID}" == "X0" ]; # requires root
+then
+    vecho "Fixing permissions.";
+    chown ${S6_USER:-alpine}:${PGID:-1000} \
+        $(dirname $REGISTRY_HTTP_TLS_CERTIFICATE) \
+        $REGISTRY_HTTP_TLS_CERTIFICATE \
+        $REGISTRY_HTTP_TLS_KEY \
+        ;
+fi;
 
 # make sure we have basic auth at the least
 if [ -n "${REGISTRY_AUTH_HTPASSWD_PATH}" ];
@@ -52,7 +62,8 @@ then
         vecho "adding credentials for: ${REG_USER}";
         htpasswd -bcB ${REGISTRY_AUTH_HTPASSWD_PATH} ${REG_USER} ${REG_PASS}
     fi;
-    if [ -f "${REGISTRY_AUTH_HTPASSWD_PATH}" ];
+    if [ -f "${REGISTRY_AUTH_HTPASSWD_PATH}" ] \
+    && [ "X${EUID}" == "X0" ]; # requires root
     then
         chown ${S6_USER:-alpine}:${S6_USER:-alpine} \
             $(dirname $REGISTRY_AUTH_HTPASSWD_PATH) \

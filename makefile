@@ -535,10 +535,15 @@ endef
 
 # maps binary platform to ARCH tags
 REG_ARCH_MAP := \
-	'aarch64') echo -n 'linux-arm64' ;; \
-	'armhf'  ) echo -n 'linux-arm'   ;; \
-	'armv7l' ) echo -n 'linux-arm'   ;; \
-	'x86_64' ) echo -n 'linux-amd64' ;; \
+	'aarch64' ) echo -n 'linux-arm64' ;; \
+	'armhf'   ) echo -n 'linux-arm'   ;; \
+	'armv7l'  ) echo -n 'linux-arm'   ;; \
+	'i386'    ) echo -n 'linux-386'   ;; \
+	'loong64' ) echo -n 'N/A'         ;; \
+	'ppc64le' ) echo -n 'N/A'         ;; \
+	'riscv64' ) echo -n 'N/A'         ;; \
+	's390x'   ) echo -n 'N/A'         ;; \
+	'x86_64'  ) echo -n 'linux-amd64' ;; \
     #
 define get_reg_arch
 $(shell case "$(ARCH)" in $(REG_ARCH_MAP) esac)
